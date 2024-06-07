@@ -1,13 +1,36 @@
+.btn-resolve{
+    width: 100px;
+    margin-top: 10px;
+    background: rgb(150, 214, 150);
+}
+
+@media only screen and (max-width: 768px) {
+    .cell {
+        width: 20px!important;
+        height: 20px!important;
+        border: 1px solid black;
+        text-align: center;
+        line-height: 20px;
+        font-size: 20px;
+    }
+    .board {
+        display: grid;
+        grid-template-columns: repeat(9, 20px)!important;
+        grid-template-rows: repeat(9, 20px)!important;
+        gap: 1px;
+        justify-content: center;
+    }
+}
 .container {
     text-align: center;
 }
 
 .board {
+    justify-content: center;
     display: grid;
     grid-template-columns: repeat(9, 50px);
     grid-template-rows: repeat(9, 50px);
     gap: 1px;
-    justify-content: center;
 }
 
 .cell {
@@ -27,15 +50,28 @@
     border-left: 3px solid black;
 }
 
-.cell:nth-child(n+10) {
-    border-top: 3px solid black;
+.cell:nth-child(27n+1), 
+.cell:nth-child(27n+2),
+.cell:nth-child(27n+3),
+.cell:nth-child(27n+4),
+.cell:nth-child(27n+5),
+.cell:nth-child(27n+6),
+.cell:nth-child(27n+7),
+.cell:nth-child(27n+8),
+.cell:nth-child(27n+9)
+{
+    border-top: 3px solid black!important;
 }
 
-.cell:nth-child(-n+27) {
-    border-bottom: 3px solid black;
-}
-.btn-resolve{
-    width: 100px;
-    margin-top: 10px;
-    background: rgb(150, 214, 150);
+.cell:nth-child(36n+1), 
+.cell:nth-child(36n+2),
+.cell:nth-child(36n+3),
+.cell:nth-child(36n+4),
+.cell:nth-child(36n+5),
+.cell:nth-child(36n+6),
+.cell:nth-child(36n+7),
+.cell:nth-child(36n+8),
+.cell:nth-child(36n+9)
+{
+    border-bottom: 3px solid black!important;
 }
