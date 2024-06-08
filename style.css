@@ -6,8 +6,8 @@
 
 @media only screen and (max-width: 768px) {
     .cell {
-        width: 20px!important;
-        height: 20px!important;
+        width: 10vw!important;
+        height: 10vw!important;
         border: 1px solid black;
         text-align: center;
         line-height: 20px;
@@ -15,8 +15,8 @@
     }
     .board {
         display: grid;
-        grid-template-columns: repeat(9, 20px)!important;
-        grid-template-rows: repeat(9, 20px)!important;
+        grid-template-columns: repeat(9, 10vw)!important;
+        grid-template-rows: repeat(9, 10vw)!important;
         gap: 1px;
         justify-content: center;
     }
