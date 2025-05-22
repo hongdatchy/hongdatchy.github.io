@@ -1,0 +1,24 @@
+<h1 id="mainTitle" style="text-align: center; margin-bottom: 40px;">
+  Kho học liệu số infographic môn Lịch sử và Địa lí lớp 4
+</h1>
+
+<div id="lessonList" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 1. LÀM QUEN VỚI PHƯƠNG TIỆN HỌC TẬP MÔN LỊCH SỬ VÀ ĐỊA LÍ.png', true)">BÀI 1. LÀM QUEN VỚI PHƯƠNG TIỆN HỌC TẬP MÔN LỊCH SỬ VÀ ĐỊA LÍ</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 11. SÔNG HỒNG VÀ VĂN MINH SÔNG HỒNG.png', true)">BÀI 11. SÔNG HỒNG VÀ VĂN MINH SÔNG HỒNG</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 16 DÂN CƯ VÀ HOẠT ĐỘNG SẢN XUẤT Ở VÙNG DUYÊN HẢI MIỀN TRUNG.png', true)">BÀI 16. DÂN CƯ VÀ HOẠT ĐỘNG SẢN XUẤT Ở VÙNG DUYÊN HẢI MIỀN TRUNG</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 18. CỐ ĐÔ HUẾ.png', true)">BÀI 18. CỐ ĐÔ HUẾ</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 19 - PHỐ CỔ HỘI AN (PHIẾU BÀI TẬP).png', true)">BÀI 19. PHỐ CỔ HỘI AN (PHIẾU BÀI TẬP)</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 19 PHỐ CỔ HỘI AN (TOÀN BÀI).png', true)">BÀI 19. PHỐ CỔ HỘI AN (TOÀN BÀI)</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 19. PHỐ CỔ HỘI AN (KHÁM PHÁ).png', true)">BÀI 19. PHỐ CỔ HỘI AN (KHÁM PHÁ)</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 22 MỘT SỐ NÉT VĂN HÓA VÀ TRUYỀN THỐNG YÊU NƯỚC, CÁCH MẠNG CỦA ĐỒNG BÀO TÂY NGUYÊN - ANH HÙNG NÚP.png', true)">BÀI 22. MỘT SỐ NÉT VĂN HÓA VÀ TRUYỀN THỐNG YÊU NƯỚC, CÁCH MẠNG CỦA ĐỒNG BÀO TÂY NGUYÊN - ANH HÙNG NÚP</button>
+  <button class="btn btn-primary w-50" onclick="showImage('BÀI 23. LỄ HỘI CỒNG CHIÊNG TÂY NGUYÊN (Nguồn Sưu tầm - Bộ văn hóa, thể thao và du lịch, TTXVN).jpg', true)">BÀI 23. LỄ HỘI CỒNG CHIÊNG TÂY NGUYÊN</button>
+</div>
+
+<!-- Xem ảnh -->
+<div id="preview" style="display: none; text-align: center; margin-top: 20px;">
+  <div style="margin-bottom: 20px;">
+    <a id="downloadBtn" href="#" download class="btn btn-success me-2">Tải ảnh về máy</a>
+    <button class="btn btn-secondary" onclick="goBack()">Quay lại danh sách</button>
+  </div>
+  <img id="previewImg" src="" alt="Preview" style="width: 100%; height: auto;" />
+</div>

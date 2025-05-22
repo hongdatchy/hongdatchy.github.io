@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Infographic Training</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .gradient-border-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            box-sizing: border-box;
+            border: 4px solid;
+            border-image: linear-gradient(45deg,
+                    #ff6ec4,
+                    #7873f5,
+                    #4ade80,
+                    #22d3ee,
+                    #facc15,
+                    #f472b6,
+                    #ff6ec4) 1;
+            border-radius: 12px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.5);
+            /* làm nền mờ */
+            z-index: -1;
+        }
+
+        body {
+            padding-top: 60px;
+            background: linear-gradient(270deg,
+                    #ff6ec4,
+                    #7873f5,
+                    #4ade80,
+                    #22d3ee,
+                    #facc15,
+                    #f472b6,
+                    #ff6ec4);
+            background-size: 1400% 1400%;
+            animation: rainbowFlow 20s linear infinite;
+            background-attachment: fixed;
+        }
+
+        @keyframes rainbowFlow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .navbar-nav .nav-link {
+            color: black !important;
+            margin-left: 15px;
+            cursor: pointer;
+        }
+
+        .nav-link.active {
+            font-weight: bold;
+            border-bottom: 2px solid black;
+        }
+
+        #main-content {
+            transition: transform 0.5s ease, opacity 0.5s;
+        }
+
+        .slide-enter {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .slide-active {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar fixed-top bg-light px-4 shadow-sm">
+        <ul class="navbar-nav flex-row ms-auto">
+            <li class="nav-item"><a class="nav-link active" data-page="gioi-thieu.html">Giới thiệu</a></li>
+            <li class="nav-item"><a class="nav-link" data-page="video.html">Video hướng dẫn</a></li>
+            <li class="nav-item"><a class="nav-link" data-page="kho.html">Kho học liệu số</a></li>
+            <li class="nav-item"><a class="nav-link" data-page="lop4.html">Lớp 4</a></li>
+            <li class="nav-item"><a class="nav-link" data-page="lop5.html">Lớp 5</a></li>
+        </ul>
+    </nav>
+
+    <div class="container mt-4">
+        <div id="main-content" class="slide-active">
+            <!-- Nội dung trang sẽ được load vào đây -->
+        </div>
+    </div>
+
+    <script>
+        const links = document.querySelectorAll('.nav-link');
+        const content = document.getElementById('main-content');
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+
+        function loadPage(page, clickedLink) {
+            // Xóa active cũ
+            links.forEach(link => link.classList.remove('active'));
+            clickedLink.classList.add('active');
+
+            fetch(page)
+                .then(res => res.text())
+                .then(html => {
+                    content.classList.remove('slide-active');
+                    content.classList.add('slide-enter');
+                    setTimeout(() => {
+                        content.innerHTML = html;
+                        content.classList.remove('slide-enter');
+                        content.classList.add('slide-active');
+                    }, 500);
+                });
+        }
+
+        links.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.dataset.page;
+                loadPage(page, link);
+            });
+        });
+
+        // Load mặc định trang đầu
+
+        // loadPage('gioi-thieu.html', document.querySelector('.nav-link.active'));
+        const pageFromUrl = getQueryParam('page') || 'gioi-thieu.html';
+        loadPage(pageFromUrl, document.querySelector(`.nav-link[data-page="${pageFromUrl}"]`) || document.querySelector('.nav-link.active'));
+
+        function showImage(filename, isLop4 = false) {
+            const folder = isLop4 ? 'INFOGRAPHIC MÔN LỊCH SỬ VÀ ĐỊA LÍ LỚP 4/' : 'INFOGRAPHIC MÔN LỊCH SỬ VÀ ĐỊA LÍ LỚP 5/';
+            const fileUrl = folder + filename;
+            document.getElementById('previewImg').src = fileUrl;
+            document.getElementById('downloadBtn').href = fileUrl;
+
+            // Ẩn danh sách và title
+            document.getElementById('lessonList').style.display = 'none';
+            document.getElementById('mainTitle').style.display = 'none';
+
+            // Hiện preview
+            document.getElementById('preview').style.display = 'block';
+        }
+
+        function goBack() {
+            // Hiện lại danh sách và title
+            document.getElementById('lessonList').style.display = 'flex';
+            document.getElementById('mainTitle').style.display = 'block';
+
+            // Ẩn preview
+            document.getElementById('preview').style.display = 'none';
+        }
+    </script>
+    <div class="gradient-border-overlay"></div>
+</body>
+
+</html>
