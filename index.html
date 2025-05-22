@@ -85,6 +85,27 @@
             transform: translateX(0);
             opacity: 1;
         }
+
+        .lesson-btn {
+            opacity: 0;
+            transform: translateY(-20px);
+            animation-fill-mode: forwards;
+            animation-name: fadeSlideDown;
+            animation-duration: 0.5s;
+            animation-timing-function: ease-out;
+        }
+
+        @keyframes fadeSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -122,15 +143,24 @@
 
             fetch(page)
                 .then(res => res.text())
+            fetch(page)
+                .then(res => res.text())
                 .then(html => {
                     content.classList.remove('slide-active');
                     content.classList.add('slide-enter');
+
                     setTimeout(() => {
                         content.innerHTML = html;
                         content.classList.remove('slide-enter');
                         content.classList.add('slide-active');
+
+                        const buttons = document.querySelectorAll('.lesson-btn');
+                        buttons.forEach((btn, i) => {
+                            btn.style.animationDelay = `${i * 0.1}s`;
+                        });
                     }, 500);
                 });
+
         }
 
         links.forEach(link => {
@@ -169,6 +199,7 @@
             // Ẩn preview
             document.getElementById('preview').style.display = 'none';
         }
+
     </script>
     <div class="gradient-border-overlay"></div>
 </body>
