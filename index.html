@@ -1,207 +1,294 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Infographic Training</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .gradient-border-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            pointer-events: none;
-            z-index: 9999;
-            box-sizing: border-box;
-            border: 4px solid;
-            border-image: linear-gradient(45deg,
-                    #ff6ec4,
-                    #7873f5,
-                    #4ade80,
-                    #22d3ee,
-                    #facc15,
-                    #f472b6,
-                    #ff6ec4) 1;
-            border-radius: 12px;
-        }
-
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            background-color: rgba(255, 255, 255, 0.5);
-            /* làm nền mờ */
-            z-index: -1;
-        }
-
-        body {
-            padding-top: 60px;
-            background: linear-gradient(270deg,
-                    #ff6ec4,
-                    #7873f5,
-                    #4ade80,
-                    #22d3ee,
-                    #facc15,
-                    #f472b6,
-                    #ff6ec4);
-            background-size: 1400% 1400%;
-            animation: rainbowFlow 20s linear infinite;
-            background-attachment: fixed;
-        }
-
-        @keyframes rainbowFlow {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            100% {
-                background-position: 100% 50%;
-            }
-        }
-
-        .navbar-nav .nav-link {
-            color: black !important;
-            margin-left: 15px;
-            cursor: pointer;
-        }
-
-        .nav-link.active {
-            font-weight: bold;
-            border-bottom: 2px solid black;
-        }
-
-        #main-content {
-            transition: transform 0.5s ease, opacity 0.5s;
-        }
-
-        .slide-enter {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-
-        .slide-active {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .lesson-btn {
-            opacity: 0;
-            transform: translateY(-20px);
-            animation-fill-mode: forwards;
-            animation-name: fadeSlideDown;
-            animation-duration: 0.5s;
-            animation-timing-function: ease-out;
-        }
-
-        @keyframes fadeSlideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <title>Multi-location Map (Google Maps link)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body, html { margin:0; padding:0; height:100%; }
+    #map { width:100%; height:100%; }
+    #panel {
+      position:absolute; top:10px; left:10px;
+      background:#fff; padding:10px; border-radius:10px;
+      box-shadow:0 4px 12px rgba(0,0,0,.2);
+      z-index:1000; width:260px;
+    }
+    textarea { width:100%; height:100px; }
+    button { margin-top:6px; padding:6px 12px; border:0; border-radius:6px; background:#0078ff; color:#fff; cursor:pointer; }
+    ul { list-style:none; padding:0; margin-top:10px; max-height:150px; overflow:auto; }
+    li { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; background:#f4f4f4; padding:4px 6px; border-radius:4px; font-size:14px; }
+    li button { background:#e53935; color:#fff; padding:2px 6px; font-size:12px; }
+  </style>
 </head>
-
 <body>
+  <div id="panel">
+    <b>Nhập link Google Maps:</b><br/>
+    <textarea id="input" oninput="checkShortLink()"></textarea>
+    <button onclick="plotLocations()">Vẽ lên map</button>
+    <!-- NÚT LẤY LINK ĐẦY ĐỦ -->
+    <button id="expandBtn" style="display:none" onclick="openShortLink()">Lấy link đầy đủ</button>
+    <ul id="list"></ul>
+  </div>
+  <div id="map"></div>
 
-    <nav class="navbar fixed-top bg-light px-4 shadow-sm">
-        <ul class="navbar-nav flex-row ms-auto">
-            <li class="nav-item"><a class="nav-link active" data-page="gioi-thieu.html">Giới thiệu</a></li>
-            <li class="nav-item"><a class="nav-link" data-page="video.html">Video hướng dẫn</a></li>
-            <li class="nav-item"><a class="nav-link" data-page="kho.html">Kho học liệu số</a></li>
-            <li class="nav-item"><a class="nav-link" data-page="lop4.html">Lớp 4</a></li>
-            <li class="nav-item"><a class="nav-link" data-page="lop5.html">Lớp 5</a></li>
-        </ul>
-    </nav>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // --- Base map layers ---
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    });
 
-    <div class="container mt-4">
-        <div id="main-content" class="slide-active">
-            <!-- Nội dung trang sẽ được load vào đây -->
-        </div>
-    </div>
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri'
+    });
 
-    <script>
-        const links = document.querySelectorAll('.nav-link');
-        const content = document.getElementById('main-content');
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
+    const terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data &copy; OpenTopoMap'
+    });
+
+    const map = L.map('map', { zoomControl: false, layers: [osm] }).setView([16.0471,108.2068], 5);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // --- Layer control ---
+    const baseLayers = {
+      "Mặc định (OSM)": osm,
+      "Vệ tinh (Satellite)": satellite,
+      "Địa hình (Terrain)": terrain
+    };
+    L.control.layers(baseLayers).addTo(map);
+
+    let currentMarkers = [];
+    let selected = [];
+    let distanceLine = null;
+    let distancePopup = null;
+
+    // --- Load saved markers và zoom/center từ localStorage ---
+    window.addEventListener("load", () => {
+        const savedView = localStorage.getItem("savedMapView");
+        if (savedView) {
+            const view = JSON.parse(savedView);
+            map.setView([view.lat, view.lng], view.zoom);
         }
 
-
-        function loadPage(page, clickedLink) {
-            // Xóa active cũ
-            links.forEach(link => link.classList.remove('active'));
-            clickedLink.classList.add('active');
-
-            fetch(page)
-                .then(res => res.text())
-            fetch(page)
-                .then(res => res.text())
-                .then(html => {
-                    content.classList.remove('slide-active');
-                    content.classList.add('slide-enter');
-
-                    setTimeout(() => {
-                        content.innerHTML = html;
-                        content.classList.remove('slide-enter');
-                        content.classList.add('slide-active');
-
-                        const buttons = document.querySelectorAll('.lesson-btn');
-                        buttons.forEach((btn, i) => {
-                            btn.style.animationDelay = `${i * 0.1}s`;
-                        });
-                    }, 500);
-                });
-
-        }
-
-        links.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = link.dataset.page;
-                loadPage(page, link);
+        const saved = localStorage.getItem("savedMarkers");
+        if (saved) {
+            const parsedList = JSON.parse(saved);
+            parsedList.forEach(item => {
+            const marker = L.marker([item.lat, item.lng]).addTo(map);
+            marker.bindPopup(item.name);
+            marker.on("click", () => toggleSelect(marker, item.name));
+            currentMarkers.push({ marker, name: item.name });
+            addToList(item, marker);
             });
+
+            if (currentMarkers.length > 0) {
+            const pts = currentMarkers.map(m => m.marker.getLatLng());
+            const bounds = L.latLngBounds(pts);
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+            }
+        }
+    });
+
+    // --- Cập nhật localStorage mỗi khi map di chuyển hoặc zoom ---
+    map.on("moveend", () => {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      localStorage.setItem("savedMapView", JSON.stringify({ lat: center.lat, lng: center.lng, zoom }));
+    });
+
+    // Ẩn/hiện nút theo link nhập
+    function checkShortLink() {
+      const val = document.getElementById("input").value.trim();
+      document.getElementById("expandBtn").style.display = val.includes("maps.app.goo.gl") ? "inline-block" : "none";
+    }
+
+    // --- mở popup với link rút gọn ---
+    function openShortLink() {
+      const url = document.getElementById("input").value.trim();
+      if (!url) {
+        alert("Nhập link maps.app.goo.gl vào ô trước khi mở!");
+        return;
+      }
+      window.open(url, "_blank", "width=800,height=600");
+      document.getElementById('input').value = "";
+      checkShortLink();
+    }
+
+    async function resolveRedirect(url) {
+      try {
+        const resp = await fetch(url, { method: "GET", redirect: "follow" });
+        return resp.url;
+      } catch (e) {
+        console.error("Redirect error:", e);
+        return null;
+      }
+    }
+
+    async function parseGoogleMapsLink(line) {
+      line = line.trim();
+      if (!line) return null;
+
+      if (line.includes("maps.app.goo.gl")) {
+        const real = await resolveRedirect(line);
+        if (!real) return null;
+        line = real;
+      }
+
+      if (!line.includes("google.com/maps")) return null;
+
+      let nameMatch = line.match(/\/place\/([^/]+)/);
+      let coordsMatch = line.match(/@([-.\d]+),([-.\d]+)/);
+      let preciseMatch = line.match(/!3d([-.\d]+)!4d([-.\d]+)/);
+
+      let name = nameMatch ? decodeURIComponent(nameMatch[1].replace(/\+/g, " ")) : null;
+      let lat = null, lng = null;
+
+      if (preciseMatch) {
+        lat = parseFloat(preciseMatch[1]);
+        lng = parseFloat(preciseMatch[2]);
+      } else if (coordsMatch) {
+        lat = parseFloat(coordsMatch[1]);
+        lng = parseFloat(coordsMatch[2]);
+      }
+
+      if (lat && lng) {
+        return {lat, lng, name: name || `Điểm (${lat}, ${lng})`};
+      }
+      return null;
+    }
+
+    async function plotLocations() {
+      const raw = document.getElementById('input').value.trim().split('\n');
+      const points = [];
+
+      for (const line of raw) {
+        const parsed = await parseGoogleMapsLink(line);
+        if (parsed) {
+          const marker = L.marker([parsed.lat, parsed.lng]).addTo(map);
+          marker.bindPopup(parsed.name);
+
+          marker.on("click", () => toggleSelect(marker, parsed.name));
+
+          currentMarkers.push({ marker, name: parsed.name });
+          points.push([parsed.lat, parsed.lng]);
+          addToList(parsed, marker);
+        }
+      }
+
+      if (currentMarkers.length > 0) {
+        const pts = currentMarkers.map(m => m.marker.getLatLng());
+        const bounds = L.latLngBounds(pts);
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
+
+      document.getElementById('input').value = "";
+      checkShortLink();
+    }
+
+    // --- Sửa hàm addToList để lưu vào localStorage ---
+    function addToList(parsed, marker) {
+      const list = document.getElementById('list');
+      const li = document.createElement('li');
+      li.textContent = parsed.name;
+      
+      const btn = document.createElement('button');
+      btn.textContent = "Xóa";
+      btn.onclick = () => {
+        map.removeLayer(marker);
+        li.remove();
+        currentMarkers = currentMarkers.filter(m => m.marker !== marker);
+        clearDistance();
+
+        // Cập nhật localStorage
+        saveMarkersToLocalStorage();
+
+        if (currentMarkers.length > 0) {
+          const pts = currentMarkers.map(m => m.marker.getLatLng());
+          const bounds = L.latLngBounds(pts);
+          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        }
+      };
+
+      li.appendChild(btn);
+      list.appendChild(li);
+
+      // Cập nhật localStorage
+      saveMarkersToLocalStorage();
+    }
+
+    // --- Hàm lưu currentMarkers vào localStorage ---
+    function saveMarkersToLocalStorage() {
+        const savedList = currentMarkers.map(m => {
+            const latlng = m.marker.getLatLng();
+            return { 
+            lat: latlng.lat,
+            lng: latlng.lng,
+            name: m.name 
+            };
         });
+        localStorage.setItem("savedMarkers", JSON.stringify(savedList));
+    }
 
-        // Load mặc định trang đầu
+    function toggleSelect(marker, name) {
+      const idx = selected.findIndex(s => s.marker === marker);
 
-        // loadPage('gioi-thieu.html', document.querySelector('.nav-link.active'));
-        const pageFromUrl = getQueryParam('page') || 'gioi-thieu.html';
-        loadPage(pageFromUrl, document.querySelector(`.nav-link[data-page="${pageFromUrl}"]`) || document.querySelector('.nav-link.active'));
-
-        function showImage(filename, isLop4 = false) {
-            const folder = isLop4 ? 'INFOGRAPHIC MÔN LỊCH SỬ VÀ ĐỊA LÍ LỚP 4/' : 'INFOGRAPHIC MÔN LỊCH SỬ VÀ ĐỊA LÍ LỚP 5/';
-            const fileUrl = folder + filename;
-            document.getElementById('previewImg').src = fileUrl;
-            document.getElementById('downloadBtn').href = fileUrl;
-
-            // Ẩn danh sách và title
-            document.getElementById('lessonList').style.display = 'none';
-            document.getElementById('mainTitle').style.display = 'none';
-
-            // Hiện preview
-            document.getElementById('preview').style.display = 'block';
+      if (idx >= 0) {
+        selected.splice(idx, 1);
+        marker.setIcon(new L.Icon.Default()); // reset icon
+        clearDistance();
+      } else {
+        if (selected.length < 2) {
+          selected.push({ marker, name });
+          marker.setIcon(new L.Icon({ 
+            iconUrl: "https://cdn-icons-png.flaticon.com/512/190/190411.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+          }));
         }
+      }
 
-        function goBack() {
-            // Hiện lại danh sách và title
-            document.getElementById('lessonList').style.display = 'flex';
-            document.getElementById('mainTitle').style.display = 'block';
+      if (selected.length === 2) {
+        showDistance();
+      }
+    }
 
-            // Ẩn preview
-            document.getElementById('preview').style.display = 'none';
-        }
+    function showDistance() {
+      clearDistance();
+      const pos1 = selected[0].marker.getLatLng();
+      const pos2 = selected[1].marker.getLatLng();
 
-    </script>
-    <div class="gradient-border-overlay"></div>
+      distanceLine = L.polyline([pos1, pos2], { color: "red" }).addTo(map);
+
+      const dist = haversine(pos1.lat, pos1.lng, pos2.lat, pos2.lng);
+
+      distancePopup = L.popup()
+        .setLatLng([(pos1.lat + pos2.lat) / 2, (pos1.lng + pos2.lng) / 2])
+        .setContent("Khoảng cách: " + dist.toFixed(2) + " km")
+        .openOn(map);
+    }
+
+    function clearDistance() {
+      if (distanceLine) {
+        map.removeLayer(distanceLine);
+        distanceLine = null;
+      }
+      if (distancePopup) {
+        map.closePopup(distancePopup);
+        distancePopup = null;
+      }
+    }
+
+    function haversine(lat1, lon1, lat2, lon2) {
+      function toRad(x) { return x * Math.PI / 180; }
+      const R = 6371;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+  </script>
 </body>
-
 </html>
