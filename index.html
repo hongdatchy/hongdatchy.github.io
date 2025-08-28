@@ -1,28 +1,81 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="utf-8" />
   <title>Multi-location Map (Google Maps link)</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body, html { margin:0; padding:0; height:100%; }
-    #map { width:100%; height:100%; }
-    #panel {
-      position:absolute; top:10px; left:10px;
-      background:#fff; padding:10px; border-radius:10px;
-      box-shadow:0 4px 12px rgba(0,0,0,.2);
-      z-index:1000; width:260px;
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
     }
-    textarea { width:100%; height:100px; }
-    button { margin-top:6px; padding:6px 12px; border:0; border-radius:6px; background:#0078ff; color:#fff; cursor:pointer; }
-    ul { list-style:none; padding:0; margin-top:10px; max-height:150px; overflow:auto; }
-    li { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; background:#f4f4f4; padding:4px 6px; border-radius:4px; font-size:14px; }
-    li button { background:#e53935; color:#fff; padding:2px 6px; font-size:12px; }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    #panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+      z-index: 1000;
+      width: 260px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+    }
+
+    button {
+      margin-top: 6px;
+      padding: 6px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: #0078ff;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+      max-height: 150px;
+      overflow: auto;
+    }
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      background: #f4f4f4;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    li button {
+      background: #e53935;
+      color: #fff;
+      padding: 2px 6px;
+      font-size: 12px;
+    }
   </style>
 </head>
+
 <body>
   <div id="panel">
-    <b>Nhập link Google Maps:</b><br/>
+    <b>Nhập link Google Maps:</b><br />
     <textarea id="input" oninput="checkShortLink()"></textarea>
     <button onclick="plotLocations()">Vẽ lên map</button>
     <!-- NÚT LẤY LINK ĐẦY ĐỦ -->
@@ -33,28 +86,16 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // --- Base map layers ---
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    });
+    const API_URL = "https://68afbb803b8db1ae9c0173eb.mockapi.io/markers";
 
-    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri'
-    });
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+    const terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'Map data &copy; OpenTopoMap' });
 
-    const terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-      attribution: 'Map data &copy; OpenTopoMap'
-    });
-
-    const map = L.map('map', { zoomControl: false, layers: [osm] }).setView([16.0471,108.2068], 5);
+    const map = L.map('map', { zoomControl: false, layers: [osm] }).setView([16.0471, 108.2068], 5);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // --- Layer control ---
-    const baseLayers = {
-      "Mặc định (OSM)": osm,
-      "Vệ tinh (Satellite)": satellite,
-      "Địa hình (Terrain)": terrain
-    };
+    const baseLayers = { "Mặc định (OSM)": osm, "Vệ tinh (Satellite)": satellite, "Địa hình (Terrain)": terrain };
     L.control.layers(baseLayers).addTo(map);
 
     let currentMarkers = [];
@@ -62,53 +103,37 @@
     let distanceLine = null;
     let distancePopup = null;
 
-    // --- Load saved markers và zoom/center từ localStorage ---
-    window.addEventListener("load", () => {
-        const savedView = localStorage.getItem("savedMapView");
-        if (savedView) {
-            const view = JSON.parse(savedView);
-            map.setView([view.lat, view.lng], view.zoom);
-        }
+    // --- Load markers từ API ---
+    window.addEventListener("load", async () => {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      data.forEach(item => {
+        const marker = L.marker([item.lat, item.lng]).addTo(map);
+        marker.bindTooltip(item.name, {
+          permanent: true,
+          direction: "top",
+          offset: [0, -10]
+        }).openTooltip();
+        marker.on("click", () => toggleSelect(marker, item.name));
+        currentMarkers.push({ marker, name: item.name, id: item.id });
+        addToList(item, marker);
+      });
 
-        const saved = localStorage.getItem("savedMarkers");
-        if (saved) {
-            const parsedList = JSON.parse(saved);
-            parsedList.forEach(item => {
-            const marker = L.marker([item.lat, item.lng]).addTo(map);
-            marker.bindPopup(item.name);
-            marker.on("click", () => toggleSelect(marker, item.name));
-            currentMarkers.push({ marker, name: item.name });
-            addToList(item, marker);
-            });
-
-            if (currentMarkers.length > 0) {
-            const pts = currentMarkers.map(m => m.marker.getLatLng());
-            const bounds = L.latLngBounds(pts);
-            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-            }
-        }
+      if (currentMarkers.length > 0) {
+        const pts = currentMarkers.map(m => m.marker.getLatLng());
+        const bounds = L.latLngBounds(pts);
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+      }
     });
 
-    // --- Cập nhật localStorage mỗi khi map di chuyển hoặc zoom ---
-    map.on("moveend", () => {
-      const center = map.getCenter();
-      const zoom = map.getZoom();
-      localStorage.setItem("savedMapView", JSON.stringify({ lat: center.lat, lng: center.lng, zoom }));
-    });
-
-    // Ẩn/hiện nút theo link nhập
     function checkShortLink() {
       const val = document.getElementById("input").value.trim();
       document.getElementById("expandBtn").style.display = val.includes("maps.app.goo.gl") ? "inline-block" : "none";
     }
 
-    // --- mở popup với link rút gọn ---
     function openShortLink() {
       const url = document.getElementById("input").value.trim();
-      if (!url) {
-        alert("Nhập link maps.app.goo.gl vào ô trước khi mở!");
-        return;
-      }
+      if (!url) { alert("Nhập link maps.app.goo.gl vào ô trước khi mở!"); return; }
       window.open(url, "_blank", "width=800,height=600");
       document.getElementById('input').value = "";
       checkShortLink();
@@ -118,22 +143,17 @@
       try {
         const resp = await fetch(url, { method: "GET", redirect: "follow" });
         return resp.url;
-      } catch (e) {
-        console.error("Redirect error:", e);
-        return null;
-      }
+      } catch { return null; }
     }
 
     async function parseGoogleMapsLink(line) {
       line = line.trim();
       if (!line) return null;
-
       if (line.includes("maps.app.goo.gl")) {
         const real = await resolveRedirect(line);
         if (!real) return null;
         line = real;
       }
-
       if (!line.includes("google.com/maps")) return null;
 
       let nameMatch = line.match(/\/place\/([^/]+)/);
@@ -142,153 +162,101 @@
 
       let name = nameMatch ? decodeURIComponent(nameMatch[1].replace(/\+/g, " ")) : null;
       let lat = null, lng = null;
+      if (preciseMatch) { lat = parseFloat(preciseMatch[1]); lng = parseFloat(preciseMatch[2]); }
+      else if (coordsMatch) { lat = parseFloat(coordsMatch[1]); lng = parseFloat(coordsMatch[2]); }
 
-      if (preciseMatch) {
-        lat = parseFloat(preciseMatch[1]);
-        lng = parseFloat(preciseMatch[2]);
-      } else if (coordsMatch) {
-        lat = parseFloat(coordsMatch[1]);
-        lng = parseFloat(coordsMatch[2]);
-      }
-
-      if (lat && lng) {
-        return {lat, lng, name: name || `Điểm (${lat}, ${lng})`};
-      }
+      if (lat && lng) return { lat, lng, name: name || `Điểm (${lat}, ${lng})` };
       return null;
     }
 
     async function plotLocations() {
       const raw = document.getElementById('input').value.trim().split('\n');
-      const points = [];
-
       for (const line of raw) {
         const parsed = await parseGoogleMapsLink(line);
         if (parsed) {
-          const marker = L.marker([parsed.lat, parsed.lng]).addTo(map);
-          marker.bindPopup(parsed.name);
+          // Gửi lên API
+          const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(parsed)
+          });
+          const saved = await res.json();
 
-          marker.on("click", () => toggleSelect(marker, parsed.name));
+          const marker = L.marker([saved.lat, saved.lng]).addTo(map);
 
-          currentMarkers.push({ marker, name: parsed.name });
-          points.push([parsed.lat, parsed.lng]);
-          addToList(parsed, marker);
+          // ✅ hiển thị tên luôn
+          marker.bindTooltip(saved.name, {
+            permanent: true,
+            direction: "top",
+            offset: [0, -10]
+          }).openTooltip();
+          marker.on("click", () => toggleSelect(marker, saved.name));
+          currentMarkers.push({ marker, name: saved.name, id: saved.id });
+          addToList(saved, marker);
         }
       }
-
       if (currentMarkers.length > 0) {
         const pts = currentMarkers.map(m => m.marker.getLatLng());
         const bounds = L.latLngBounds(pts);
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
       }
-
       document.getElementById('input').value = "";
       checkShortLink();
     }
 
-    // --- Sửa hàm addToList để lưu vào localStorage ---
     function addToList(parsed, marker) {
       const list = document.getElementById('list');
       const li = document.createElement('li');
       li.textContent = parsed.name;
-      
+
       const btn = document.createElement('button');
       btn.textContent = "Xóa";
-      btn.onclick = () => {
+      btn.onclick = async () => {
+        await fetch(`${API_URL}/${parsed.id}`, { method: "DELETE" });
         map.removeLayer(marker);
         li.remove();
         currentMarkers = currentMarkers.filter(m => m.marker !== marker);
         clearDistance();
-
-        // Cập nhật localStorage
-        saveMarkersToLocalStorage();
-
-        if (currentMarkers.length > 0) {
-          const pts = currentMarkers.map(m => m.marker.getLatLng());
-          const bounds = L.latLngBounds(pts);
-          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-        }
       };
 
       li.appendChild(btn);
       list.appendChild(li);
-
-      // Cập nhật localStorage
-      saveMarkersToLocalStorage();
-    }
-
-    // --- Hàm lưu currentMarkers vào localStorage ---
-    function saveMarkersToLocalStorage() {
-        const savedList = currentMarkers.map(m => {
-            const latlng = m.marker.getLatLng();
-            return { 
-            lat: latlng.lat,
-            lng: latlng.lng,
-            name: m.name 
-            };
-        });
-        localStorage.setItem("savedMarkers", JSON.stringify(savedList));
     }
 
     function toggleSelect(marker, name) {
       const idx = selected.findIndex(s => s.marker === marker);
-
-      if (idx >= 0) {
-        selected.splice(idx, 1);
-        marker.setIcon(new L.Icon.Default()); // reset icon
-        clearDistance();
-      } else {
+      if (idx >= 0) { selected.splice(idx, 1); marker.setIcon(new L.Icon.Default()); clearDistance(); }
+      else {
         if (selected.length < 2) {
           selected.push({ marker, name });
-          marker.setIcon(new L.Icon({ 
-            iconUrl: "https://cdn-icons-png.flaticon.com/512/190/190411.png",
-            iconSize: [25, 41],
-            iconAnchor: [12, 41]
-          }));
+          marker.setIcon(new L.Icon({ iconUrl: "https://cdn-icons-png.flaticon.com/512/190/190411.png", iconSize: [25, 41], iconAnchor: [12, 41] }));
         }
       }
-
-      if (selected.length === 2) {
-        showDistance();
-      }
+      if (selected.length === 2) showDistance();
     }
 
     function showDistance() {
       clearDistance();
       const pos1 = selected[0].marker.getLatLng();
       const pos2 = selected[1].marker.getLatLng();
-
       distanceLine = L.polyline([pos1, pos2], { color: "red" }).addTo(map);
-
       const dist = haversine(pos1.lat, pos1.lng, pos2.lat, pos2.lng);
-
-      distancePopup = L.popup()
-        .setLatLng([(pos1.lat + pos2.lat) / 2, (pos1.lng + pos2.lng) / 2])
-        .setContent("Khoảng cách: " + dist.toFixed(2) + " km")
-        .openOn(map);
+      distancePopup = L.popup().setLatLng([(pos1.lat + pos2.lat) / 2, (pos1.lng + pos2.lng) / 2])
+        .setContent("Khoảng cách: " + dist.toFixed(2) + " km").openOn(map);
     }
 
     function clearDistance() {
-      if (distanceLine) {
-        map.removeLayer(distanceLine);
-        distanceLine = null;
-      }
-      if (distancePopup) {
-        map.closePopup(distancePopup);
-        distancePopup = null;
-      }
+      if (distanceLine) { map.removeLayer(distanceLine); distanceLine = null; }
+      if (distancePopup) { map.closePopup(distancePopup); distancePopup = null; }
     }
 
     function haversine(lat1, lon1, lat2, lon2) {
       function toRad(x) { return x * Math.PI / 180; }
-      const R = 6371;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
+      const R = 6371, dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
   </script>
 </body>
+
 </html>
